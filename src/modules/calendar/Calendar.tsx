@@ -43,7 +43,6 @@ const CalendarScreen = () => {
     // Object.assign(this, jsonObject);
   };
   const saveCalendar = () => {
-    console.log(dataCalendar);
     const dataTemp: any = { ...dataCalendar };
     dataTemp[`${dateString.current}`] = {
       ...dataCalendar[`${dateString.current}`],
@@ -77,10 +76,6 @@ const CalendarScreen = () => {
   const onDayPress = (date: DateData) => {
     dateString.current = date.dateString;
     const dataTemp: any = {};
-    const dataListTemp = [];
-
-    // for (const property in dataCalendar) {
-    //   console.log(`${property}: ${dataCalendar[property]}`);
     if (isEmpty(dataCalendar)) {
       dataTemp[`${date.dateString}`] = {
         dots: [],
@@ -105,11 +100,8 @@ const CalendarScreen = () => {
           selectedColor: "red",
         };
       }
-      console.log(dataTemp);
-
       handleDataList(dataTemp, date.dateString);
     }
-    // }
     setDataCalendar(dataTemp);
   };
 
