@@ -27,7 +27,6 @@ const AppNavigator = () => {
           headerShown: false,
         }}
       >
-        <RootStack.Screen name={"calendar"} component={CalendarScreen} />
         {isAuthenticated ? (
           <RootStack.Screen name={"private"} component={Private} />
         ) : (
