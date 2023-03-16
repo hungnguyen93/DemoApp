@@ -29,6 +29,7 @@ const CalendarScreen = () => {
   const [dataCalendar, setDataCalendar] = useState<any[]>([]);
   const [inputText, setInputText] = useState<string>("");
   const [objetRender, setObjectRender] = useState<{}>({});
+  const [getInfo, setInfo] = useState<any>([]);
 
   const loadCalendar = async () => {
     const jsonString = await AsyncStorage.getItem("demo-app");
@@ -45,7 +46,6 @@ const CalendarScreen = () => {
         result[date] = { dots: [{ key, color }] };
       }
     }
-    // console.log("jjasdas", { ...objetRender });
     setDataCalendar(jsonObject);
     setObjectRender(result);
   };
@@ -59,9 +59,12 @@ const CalendarScreen = () => {
     loadCalendar();
   }, []);
 
-  const fitterType = (typeColor: string = "red") => {
+  const fitterType = (typeColor: string) => {
     const result: any = {};
-
+    if (!typeColor) {
+      loadCalendar();
+      return;
+    }
     for (const item of dataCalendar) {
       const date = Object.keys(item)[0];
       const color = item[date].color;
@@ -71,20 +74,39 @@ const CalendarScreen = () => {
       }
     }
     setObjectRender(result);
-    // console.log("fiterColor", result);
+  };
+  const showInfoDate = (dateInfo: string) => {
+    let result: any = [];
+    for (const item of dataCalendar) {
+      const date = Object.keys(item)[0];
+      const color = item[date].color;
+      const key = item[date].key;
+
+      if (dateInfo === date) {
+        result.push({ key, color });
+      }
+    }
+    setInfo(result);
   };
 
   return (
     <View>
       <View style={styles.containerRow}>
-        <TouchableOpacity style={styles.btn}>
-          <Text style={styles.txtBtn}>Create Event</Text>
-        </TouchableOpacity>
+        {dateString && getInfo.length < 3 && (
+          <TouchableOpacity
+            onPress={() => setIsVisible(true)}
+            style={styles.btnCreate}
+          >
+            <Text style={styles.txtBtnCreate}>+</Text>
+          </TouchableOpacity>
+        )}
 
-        <ScrollView showsHorizontalScrollIndicator horizontal={true}>
+        <ScrollView showsHorizontalScrollIndicator={false} horizontal={true}>
           {listNameSort.map((item, index) => (
             <TouchableOpacity
-              onPress={() => fitterType(item.color)}
+              onPress={() =>
+                fitterType(item.color == "black" ? "" : item.color)
+              }
               key={index}
               style={[styles.btn, { backgroundColor: item.color }]}
             >
@@ -109,9 +131,50 @@ const CalendarScreen = () => {
         }}
         onDayPress={(value) => {
           setDateString(value?.dateString);
-          setIsVisible(true);
+          showInfoDate(value?.dateString);
+          // setIsVisible(true);
+        }}
+        theme={{
+          backgroundColor: "red",
+          selectedDayBackgroundColor: "#00adf5",
+          indicatorColor: "blue",
+          selectedDotColor: "#00adf5",
+          todayTextColor: "#00adf5",
+          selectedDayTextColor: "red",
+          dayTextColor: "#2d4150",
+          calendarBackground: "#ffffff",
+          textSectionTitleColor: "#b6c1cd",
+          textSectionTitleDisabledColor: "#d9e1e8",
+          textDisabledColor: "#d9e1e8",
+          dotColor: "#00adf5",
         }}
       />
+      <View style={[styles.viewRow, { paddingHorizontal: 12, marginTop: 15 }]}>
+        <Text style={styles.txtPopup}>DateTime: </Text>
+        <Text style={styles.txtDateTime}>{dateString} </Text>
+      </View>
+      {getInfo.map((item: any, index: any) => (
+        <>
+          <View style={{ paddingHorizontal: 12 }} key={index}>
+            <View style={styles.viewRow}>
+              <Text style={styles.txtPopup}>Title: </Text>
+              <Text style={styles.txtDateTime}>{item?.key} </Text>
+            </View>
+
+            <View style={styles.viewRow}>
+              <Text style={styles.txtPopup}>Status: </Text>
+              <TouchableOpacity
+                style={[styles.tcb_Choose, { backgroundColor: item.color }]}
+              />
+            </View>
+            {getInfo.length > 1 && (
+              <View
+                style={{ borderBottomColor: "#E0E0E0", borderBottomWidth: 1 }}
+              />
+            )}
+          </View>
+        </>
+      ))}
       <ModalNotion
         onPressCancel={() => setIsVisible(false)}
         onPressOk={
@@ -133,18 +196,22 @@ const CalendarScreen = () => {
                     },
                   },
                 ]);
-
                 setIsVisible(false);
                 setInputText("");
                 currentIdChoose.current = undefined;
               }
-            : () => {}
+            : () => {
+                ToastAndroid.show(
+                  "Please fill out the information completely !",
+                  ToastAndroid.SHORT
+                );
+              }
         }
-        title={"Set Calendar"}
+        title={"Create Event"}
         isVisible={isVisible}
         children={
           <View style={{ marginVertical: 30 }}>
-            <View style={{ flexDirection: "row" }}>
+            <View style={styles.viewRow}>
               <Text style={styles.txtPopup}>Status: </Text>
               {listItemChoose.map((i, index) =>
                 index > 0 ? (
@@ -175,8 +242,11 @@ const CalendarScreen = () => {
                 ) : null
               )}
             </View>
-            <Text style={styles.txtPopup}>DateTime: {dateString} </Text>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={styles.viewRow}>
+              <Text style={styles.txtPopup}>DateTime: </Text>
+              <Text style={styles.txtDateTime}>{dateString} </Text>
+            </View>
+            <View style={styles.viewRow}>
               <Text style={styles.txtPopup}>Title: </Text>
               <TextInput
                 onChangeText={setInputText}

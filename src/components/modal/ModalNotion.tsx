@@ -77,9 +77,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   modal_title: {
-    fontSize: 26,
+    fontSize: 22,
     textAlign: "center",
-    lineHeight: 35,
+    lineHeight: 30,
+    color: "black",
   },
 
   modal_bottom_container: {
@@ -106,13 +107,13 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   modal_bottom_textButtonLeft: {
-    fontSize: 26,
+    fontSize: 22,
     color: "#333333",
     lineHeight: 38,
   },
   modal_bottom_textButtonRight: {
-    fontSize: 26,
-    color: "white",
+    fontSize: 22,
+    color: "black",
     lineHeight: 38,
   },
   modal_description: {

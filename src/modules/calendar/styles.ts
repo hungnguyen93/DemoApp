@@ -8,12 +8,36 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 18,
     marginRight: 10,
+    alignSelf: "center",
   },
+  btnCreate: {
+    backgroundColor: "#E0E0E0",
+    borderColor: "black",
+    paddingHorizontal: 20,
+    borderRadius: 18,
+    marginRight: 10,
+    borderWidth: 2,
+    alignSelf: "center",
+  },
+  txtBtnCreate: {
+    fontSize: 30,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "black",
+  },
+
   txtBtn: { fontSize: 15, fontWeight: "bold", color: "#E0E0E0" },
   txtPopup: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#84C13D",
+    color: "black",
+    marginBottom: 12,
+  },
+  txtDateTime: {
+    marginLeft: 12,
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "black",
     marginBottom: 12,
   },
   tcb_Choose: {
@@ -29,7 +53,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginHorizontal: 10,
     marginBottom: 15,
-    borderWidth: 2,
+    borderWidth: 3,
   },
   txtInput: {
     backgroundColor: "#E0E0E0",
@@ -37,6 +61,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     flex: 1,
     marginHorizontal: 12,
+  },
+  viewRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignContent: "center",
   },
 });
 export default styles;
