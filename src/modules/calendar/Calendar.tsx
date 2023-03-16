@@ -12,6 +12,7 @@ import ModalNotion from "~components/modal/ModalNotion";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TextInput } from "react-native-gesture-handler";
 import isEmpty from "lodash.isempty";
+import Container from "~components/Container";
 
 const listNameSort = [
   { title: "Started", id: 1, color: "green" },
@@ -24,69 +25,136 @@ const listNameSort = [
 const CalendarScreen = () => {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [listItemChoose, setItemChoose] = useState<any[]>([...listNameSort]);
-  // const [dateString, setDateString] = useState<string>("");
-  const dateString = useRef<string>();
+  const dateString = useRef<any>();
   const currentIdChoose = useRef<number>(0);
-  const vacation = { key: "vacation", color: "blue" };
-  const massage = { key: "massage", color: "red" };
-  const workout = { key: "workout", color: "green" };
   const [dataCalendar, setDataCalendar] = useState<any>({});
-  const [inputText, setInputText] = useState<string>("");
+  const [dataList, setDataList] = useState<any>([]);
+  const inputTitle = useRef<string>("");
+  const dataStorage = useRef<any>({});
 
   const loadCalendar = async () => {
     const jsonString = await AsyncStorage.getItem("demo-app");
     const jsonObject = jsonString ? JSON.parse(jsonString) : "";
-    setDataCalendar([jsonObject]);
+    if (jsonObject) {
+      dataStorage.current = jsonObject;
+      setDataCalendar(jsonObject);
+    }
     console.log(jsonObject);
     // Object.assign(this, jsonObject);
   };
   const saveCalendar = () => {
     console.log(dataCalendar);
     const dataTemp: any = { ...dataCalendar };
-    console.log("1", (dataTemp[`${dateString.current}`] = { a: 1 }));
-    console.log("2", ...dataCalendar[`${dateString.current}`].dots);
-    // console.log('3',listItemChoose.filter((item) => item.isCheck)[0].color )
-
     dataTemp[`${dateString.current}`] = {
+      ...dataCalendar[`${dateString.current}`],
       dots: [
         ...dataCalendar[`${dateString.current}`].dots,
         { color: listItemChoose.filter((item) => item.isCheck)[0].color },
       ],
+      title: dataCalendar[`${dateString.current}`].title
+        ? [...dataCalendar[`${dateString.current}`].title, inputTitle.current]
+        : [inputTitle.current],
     };
+    console.log("dataTemp", dataTemp);
+    inputTitle.current = "";
     setDataCalendar(dataTemp);
     setIsVisible(false);
-    // let jsonString = "";
-    // jsonString = JSON.stringify(data); //value
-    // await AsyncStorage.setItem("demo-app", jsonString);
+    dataStorage.current[dateString.current] = {
+      ...dataTemp[dateString.current],
+    };
+    saveToLocalStorage(dataStorage.current);
+
+    handleDataList(dataTemp, dateString.current);
+  };
+
+  const saveToLocalStorage = async (data: any) => {
+    const dataTemp = { ...data };
+    dataTemp[dateString.current].selected = false;
+    const dataJson = JSON.stringify(dataTemp);
+    await AsyncStorage.setItem("demo-app", dataJson);
   };
 
   const onDayPress = (date: DateData) => {
     dateString.current = date.dateString;
     const dataTemp: any = {};
-    if (isEmpty(dataCalendar[date.dateString])) {
+    const dataListTemp = [];
+
+    // for (const property in dataCalendar) {
+    //   console.log(`${property}: ${dataCalendar[property]}`);
+    if (isEmpty(dataCalendar)) {
       dataTemp[`${date.dateString}`] = {
         dots: [],
         selected: true,
         selectedColor: "red",
       };
     } else {
-      dataTemp[`${date.dateString}`] = {
-        dots: dataCalendar[date.dateString].dots,
-        selected: true,
-        selectedColor: "red",
-      };
+      for (const property in dataCalendar) {
+        if (dataCalendar[property].dots.length > 0) {
+          dataTemp[`${property}`] = {
+            ...dataCalendar[`${property}`],
+            dots: dataCalendar[property].dots,
+            selected: property === date.dateString,
+            selectedColor: "red",
+          };
+        }
+      }
+      if (isEmpty(dataCalendar[`${date.dateString}`])) {
+        dataTemp[`${date.dateString}`] = {
+          dots: [],
+          selected: true,
+          selectedColor: "red",
+        };
+      }
+      console.log(dataTemp);
+
+      handleDataList(dataTemp, date.dateString);
     }
+    // }
     setDataCalendar(dataTemp);
   };
 
-  const handleFilter = (id: number) => {};
+  const handleDataList = (data: any, date: any) => {
+    const dataListTemp = [];
+    for (let i = 0; i < data[`${date}`].dots.length; i++) {
+      const element = data[`${date}`].dots[i];
+      dataListTemp.push({
+        title: data[`${date}`].title[i],
+        status: element.color,
+      });
+    }
+    setDataList(dataListTemp);
+  };
+
+  const handleButtonFilter = (color: string) => {
+    let dataTemp: any = {};
+
+    if (color === "black") {
+      dataTemp = { ...dataStorage.current };
+    } else {
+      for (const property in dataStorage.current) {
+        for (let i = 0; i < dataStorage.current[property].dots.length; i++) {
+          const element = dataStorage.current[property].dots[i];
+          if (element.color === color) {
+            dataTemp[`${property}`] = {
+              dots: [{ color: element.color }],
+              title: [dataStorage.current[property].title[i]],
+            };
+          }
+        }
+      }
+    }
+
+    console.log("dataTemp filter", dataTemp);
+    setDataCalendar(dataTemp);
+    dataList.length > 0 && setDataList([]);
+  };
 
   useEffect(() => {
-    // loadCalendar();
+    loadCalendar();
   }, []);
 
   return (
-    <View>
+    <Container>
       <View style={styles.containerRow}>
         <TouchableOpacity onPress={() => setIsVisible(true)} style={styles.btn}>
           <Text style={styles.txtBtn}>Create Event</Text>
@@ -94,7 +162,7 @@ const CalendarScreen = () => {
         <ScrollView showsHorizontalScrollIndicator={false} horizontal>
           {listNameSort.map((item, index) => (
             <TouchableOpacity
-              // onPress={}
+              onPress={() => handleButtonFilter(item.color)}
               key={index}
               style={[styles.btn, { backgroundColor: item.color }]}
             >
@@ -110,6 +178,38 @@ const CalendarScreen = () => {
         markedDates={dataCalendar}
         onDayPress={(value) => onDayPress(value)}
       />
+      <View style={{ flex: 1, padding: 20 }}>
+        <FlatList
+          keyExtractor={(_, index) => `${index}`}
+          ItemSeparatorComponent={() => (
+            <View style={{ height: 0.5, backgroundColor: "gray" }} />
+          )}
+          data={dataList}
+          renderItem={({ item }) => {
+            return (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: 5,
+                }}
+              >
+                <View
+                  style={{
+                    height: 10,
+                    width: 10,
+                    borderRadius: 5,
+                    backgroundColor: item.status,
+                  }}
+                />
+                <Text style={{ fontSize: 18, marginLeft: 10 }}>
+                  {item.title}
+                </Text>
+              </View>
+            );
+          }}
+        />
+      </View>
       <ModalNotion
         onPressCancel={() => {
           setIsVisible(false);
@@ -128,16 +228,11 @@ const CalendarScreen = () => {
                     key={index}
                     onPress={() => {
                       currentIdChoose.current = i.id;
-                      setItemChoose((preState) => {
-                        const newArr = [...preState];
-                        newArr.forEach((item, i) => {
-                          if (item !== i) {
-                            item.isCheck = false;
-                          }
-                        });
-                        newArr[index].isCheck = true;
-                        return newArr;
-                      });
+                      setItemChoose(
+                        listItemChoose.map((item) => {
+                          return { ...item, isCheck: item.id === i.id };
+                        })
+                      );
                     }}
                     style={[
                       i?.isCheck == true
@@ -153,7 +248,7 @@ const CalendarScreen = () => {
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Text style={styles.txtPopup}>Title: </Text>
               <TextInput
-                onChangeText={setInputText}
+                onChangeText={(text) => (inputTitle.current = text)}
                 style={styles.txtInput}
                 placeholder="Please Input Text"
               />
@@ -161,7 +256,7 @@ const CalendarScreen = () => {
           </View>
         }
       />
-    </View>
+    </Container>
   );
 };
 export default CalendarScreen;
