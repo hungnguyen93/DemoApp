@@ -10,7 +10,12 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   txtBtn: { fontSize: 15, fontWeight: "bold", color: "#E0E0E0" },
-  txtPopup: { fontSize: 18, fontWeight: "bold", color: "#84C13D" },
+  txtPopup: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#84C13D",
+    marginBottom: 12,
+  },
   tcb_Choose: {
     width: 30,
     height: 30,
@@ -25,6 +30,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     marginBottom: 15,
     borderWidth: 2,
+  },
+  txtInput: {
+    backgroundColor: "#E0E0E0",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    flex: 1,
+    marginHorizontal: 12,
   },
 });
 export default styles;

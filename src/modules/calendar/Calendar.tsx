@@ -1,23 +1,24 @@
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./styles";
 import { Calendar } from "react-native-calendars";
-import { FlatList, Text, View, TouchableOpacity } from "react-native";
+import {
+  FlatList,
+  Text,
+  View,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import ModalNotion from "~components/modal/ModalNotion";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { TextInput } from "react-native-gesture-handler";
 
 const listNameSort = [
+  { title: "All", id: 1, color: "black" },
   { title: "Started", id: 1, color: "green" },
   { title: "In Progress", id: 2, color: "yellow" },
   { title: "Finished", id: 3, color: "blue" },
   { title: "Canceled", id: 4, color: "red" },
 ];
-enum Colors {
-  "black",
-  "green",
-  "yellow",
-  "blue",
-  "red",
-}
 
 const CalendarScreen = () => {
   const [isVisible, setIsVisible] = useState<boolean>(false);
@@ -28,6 +29,7 @@ const CalendarScreen = () => {
   const massage = { key: "massage", color: "red" };
   const workout = { key: "workout", color: "green" };
   const [dataCalendar, setDataCalendar] = useState<any[]>();
+  const [inputText, setInputText] = useState<string>("");
 
   const loadCalendar = async () => {
     const jsonString = await AsyncStorage.getItem("demo-app");
@@ -49,13 +51,11 @@ const CalendarScreen = () => {
     <View>
       <View style={styles.containerRow}>
         <TouchableOpacity style={styles.btn}>
-          <Text style={styles.txtBtn}>All</Text>
+          <Text style={styles.txtBtn}>Create Event</Text>
         </TouchableOpacity>
-        <FlatList
-          horizontal={true}
-          data={listNameSort}
-          showsHorizontalScrollIndicator={false}
-          renderItem={({ item }) => (
+
+        <ScrollView showsHorizontalScrollIndicator={false} horizontal>
+          {listNameSort.map((item) => (
             <TouchableOpacity
               style={[styles.btn, { backgroundColor: item.color }]}
             >
@@ -63,8 +63,8 @@ const CalendarScreen = () => {
                 {item.title}
               </Text>
             </TouchableOpacity>
-          )}
-        />
+          ))}
+        </ScrollView>
       </View>
       <Calendar
         markingType={"multi-dot"}
@@ -128,6 +128,14 @@ const CalendarScreen = () => {
               ))}
             </View>
             <Text style={styles.txtPopup}>DateTime: {dateString} </Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text style={styles.txtPopup}>Title: </Text>
+              <TextInput
+                onChangeText={setInputText}
+                style={styles.txtInput}
+                placeholder="Please Input Text"
+              />
+            </View>
           </View>
         }
       />
