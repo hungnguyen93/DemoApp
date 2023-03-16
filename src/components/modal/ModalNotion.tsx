@@ -34,7 +34,7 @@ const ModalNotion = ({
           {children}
           <View style={styles.modal_bottom_container}>
             <TouchableOpacity
-              onPress={onPressOk}
+              onPress={onPressCancel}
               style={styles.modal_bottom_buttonLeft}
             >
               <Text style={styles.modal_bottom_textButtonRight}>

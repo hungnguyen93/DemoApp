@@ -45,7 +45,7 @@ const CalendarScreen = () => {
         result[date] = { dots: [{ key, color }] };
       }
     }
-    console.log("jjasdas", { ...objetRender });
+    // console.log("jjasdas", { ...objetRender });
     setDataCalendar(jsonObject);
     setObjectRender(result);
   };
@@ -53,10 +53,26 @@ const CalendarScreen = () => {
     let jsonString = "";
     jsonString = JSON.stringify(data); //value
     await AsyncStorage.setItem("demo-app", jsonString);
+    loadCalendar();
   };
   useEffect(() => {
     loadCalendar();
   }, []);
+
+  const fitterType = (typeColor: string = "red") => {
+    const result: any = {};
+
+    for (const item of dataCalendar) {
+      const date = Object.keys(item)[0];
+      const color = item[date].color;
+      const key = item[date].key;
+      if (color === typeColor) {
+        result[date] = { dots: [{ key, color }] };
+      }
+    }
+    setObjectRender(result);
+    // console.log("fiterColor", result);
+  };
 
   return (
     <View>
@@ -68,6 +84,7 @@ const CalendarScreen = () => {
         <ScrollView showsHorizontalScrollIndicator horizontal={true}>
           {listNameSort.map((item, index) => (
             <TouchableOpacity
+              onPress={() => fitterType(item.color)}
               key={index}
               style={[styles.btn, { backgroundColor: item.color }]}
             >
@@ -99,8 +116,15 @@ const CalendarScreen = () => {
         onPressCancel={() => setIsVisible(false)}
         onPressOk={
           inputText && currentIdChoose.current
-            ? async () => {
-                await saveCalendar([
+            ? () => {
+                setObjectRender({
+                  ...objetRender,
+                  [dateString]: {
+                    key: inputText,
+                    color: listItemChoose[currentIdChoose.current!]?.color,
+                  },
+                });
+                saveCalendar([
                   ...dataCalendar,
                   {
                     [dateString]: {
@@ -109,13 +133,7 @@ const CalendarScreen = () => {
                     },
                   },
                 ]);
-                setObjectRender({
-                  ...objetRender,
-                  [dateString]: {
-                    key: inputText,
-                    color: listItemChoose[currentIdChoose.current!]?.color,
-                  },
-                });
+
                 setIsVisible(false);
                 setInputText("");
                 currentIdChoose.current = undefined;
