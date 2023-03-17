@@ -16,8 +16,10 @@ import { TextInput } from "react-native-gesture-handler";
 import isEmpty from "lodash.isempty";
 import Container from "~components/Container";
 import Loading from "~components/loadings/Loading";
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 
 enum StatusColor {
   GREEN = "green",
@@ -35,6 +37,8 @@ const listNameSort = [
   { title: "All", id: 5, color: StatusColor.BLACK },
 ];
 
+const isClock = require("./clock.png");
+
 const CalendarScreen = () => {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [listItemChoose, setItemChoose] = useState<any[]>([...listNameSort]);
@@ -45,47 +49,47 @@ const CalendarScreen = () => {
   const inputTitle = useRef<string>("");
   const dataStorage = useRef<any>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [dateTime, setDateTime] = useState<Date>(new Date());
 
   const loadCalendar = async () => {
     const jsonString = await AsyncStorage.getItem("demo-app");
     const jsonObject = jsonString ? JSON.parse(jsonString) : "";
     if (jsonObject) {
-      console.log('--data loaded: ', jsonObject);
       dataStorage.current = jsonObject;
       setDataCalendar(jsonObject);
     }
     setIsLoading(false);
   };
   const saveCalendar = () => {
-    if (inputTitle.current === '') {
+    if (inputTitle.current === "") {
       ToastAndroid.show("Title is required", 800);
-      return;
+    } else {
+      const dataTemp: any = { ...dataCalendar };
+      dataTemp[`${dateString.current}`] = {
+        ...dataCalendar[`${dateString.current}`],
+        dots: [
+          ...dataCalendar[`${dateString.current}`].dots,
+          { color: listItemChoose.filter((item) => item.isCheck)[0].color },
+        ],
+        title: dataCalendar[`${dateString.current}`].title
+          ? [...dataCalendar[`${dateString.current}`].title, inputTitle.current]
+          : [inputTitle.current],
+        time: dataCalendar[`${dateString.current}`].time
+          ? [
+              ...dataCalendar[`${dateString.current}`].time,
+              dateTime.toLocaleTimeString("en-US"),
+            ]
+          : [dateTime.toLocaleTimeString("en-US")],
+      };
+      inputTitle.current = "";
+      setDataCalendar(dataTemp);
+      setIsVisible(false);
+      dataStorage.current[dateString.current] = {
+        ...dataTemp[dateString.current],
+      };
+      saveToLocalStorage(dataStorage.current);
+      handleDataList(dataTemp, dateString.current);
     }
-    const dataTemp: any = { ...dataCalendar };
-    dataTemp[`${dateString.current}`] = {
-      ...dataCalendar[`${dateString.current}`],
-      dots: [
-        ...dataCalendar[`${dateString.current}`].dots,
-        { color: listItemChoose.filter((item) => item.isCheck)[0].color },
-      ],
-      title: dataCalendar[`${dateString.current}`].title
-        ? [...dataCalendar[`${dateString.current}`].title, inputTitle.current]
-        : [inputTitle.current],
-      time: dataCalendar[`${dateString.current}`].time
-        ? [...dataCalendar[`${dateString.current}`].time, date.toLocaleTimeString('en-US')]
-        : [date.toLocaleTimeString('en-US')],
-    };
-    inputTitle.current = "";
-    setDate(new Date('2000-1-1'));
-    setDataCalendar(dataTemp);
-    setIsVisible(false);
-    dataStorage.current[dateString.current] = {
-      ...dataTemp[dateString.current],
-    };
-    console.log('===dataStorage==', dataStorage)
-    saveToLocalStorage(dataStorage.current);
-
-    handleDataList(dataTemp, dateString.current);
   };
 
   const saveToLocalStorage = async (data: any) => {
@@ -152,6 +156,7 @@ const CalendarScreen = () => {
             dataTemp[`${property}`] = {
               dots: [{ color: element.color }],
               title: [dataStorage.current[property].title[i]],
+              time: [dataStorage.current[property].time[i]],
             };
           }
         }
@@ -172,29 +177,19 @@ const CalendarScreen = () => {
   useEffect(() => {
     loadCalendar();
   }, []);
-  const [date, setDate] = useState(new Date('2000-1-1'));
 
-  const onChange = (_: any, selectedDate: any) => {
-    const currentDate = selectedDate;
-    console.log('====', currentDate);
-    setDate(currentDate);
+  const onChange = (_: DateTimePickerEvent, selectedDate: Date | undefined) => {
+    setDateTime(selectedDate || new Date());
   };
 
   const showTimepicker = () => {
     DateTimePickerAndroid.open({
-      value: date,
+      value: dateTime,
       onChange,
-      mode: 'time',
+      mode: "time",
       is24Hour: true,
     });
-
   };
-
-  console.log('===date==', date);
-
-  // const getTimeString = (date: any) => {
-  //   return 
-  // }
 
   return (
     <Container>
@@ -246,10 +241,16 @@ const CalendarScreen = () => {
                   }}
                 />
                 <Text style={{ fontSize: 18, marginLeft: 10 }}>
-                  {item.time}{' '}
-                </Text>
-                <Text style={{ fontSize: 18, marginLeft: 10 }}>
                   {item.title}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 10,
+                    marginLeft: 10,
+                    marginTop: 8,
+                  }}
+                >
+                  {item.time}
                 </Text>
               </View>
             );
@@ -290,17 +291,27 @@ const CalendarScreen = () => {
               })}
             </View>
             <View style={{ marginVertical: 20 }}>
-              <Text style={styles.txtPopup}>
-                Date: {dateString.current}{" "}
-              </Text>
+              <Text style={styles.txtPopup}>Date: {dateString.current} </Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-              <Text style={styles.txtPopup}>
-                Time:
-              </Text>
-              <TouchableOpacity onPress={showTimepicker} style={{ flexDirection: 'row', alignItems: 'center' }} >
-                <Text style={styles.txtPopup}> {date.toLocaleTimeString('en-US')}</Text>
-                <Image style={{ width: 30, height: 30 }} source={require('./clock.png')} />
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 20,
+              }}
+            >
+              <Text style={styles.txtPopup}>Time:</Text>
+              <TouchableOpacity
+                onPress={showTimepicker}
+                style={{ flexDirection: "row", alignItems: "center" }}
+              >
+                <Text style={styles.txtPopup}>
+                  {` ${dateTime.toLocaleTimeString("en-US")} `}
+                </Text>
+                <Image
+                  style={{ width: 20, height: 20, alignSelf: "flex-end" }}
+                  source={isClock}
+                />
               </TouchableOpacity>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
