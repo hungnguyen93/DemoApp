@@ -6,7 +6,6 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  Alert,
   ToastAndroid,
 } from "react-native";
 import ModalNotion from "~components/modal/ModalNotion";
@@ -43,11 +42,13 @@ const CalendarScreen = () => {
       if (result[date]) {
         result[date].dots.push({ key, color });
       } else {
-        result[date] = { dots: [{ key, color }] };
+        result[date] = {
+          dots: [{ key, color }],
+        };
       }
     }
-    setDataCalendar(jsonObject);
     setObjectRender(result);
+    setDataCalendar(jsonObject);
   };
   const saveCalendar = async (data: any) => {
     let jsonString = "";
@@ -121,6 +122,7 @@ const CalendarScreen = () => {
         markingType={"multi-dot"}
         markedDates={{
           ...objetRender,
+          [dateString]: { dots: [], selected: true, selectedColor: "red" },
           // "2023-03-25": {
           //   dots: [vacation, massage, workout],
           //   // selected: true,
@@ -132,21 +134,6 @@ const CalendarScreen = () => {
         onDayPress={(value) => {
           setDateString(value?.dateString);
           showInfoDate(value?.dateString);
-          // setIsVisible(true);
-        }}
-        theme={{
-          backgroundColor: "red",
-          selectedDayBackgroundColor: "#00adf5",
-          indicatorColor: "blue",
-          selectedDotColor: "#00adf5",
-          todayTextColor: "#00adf5",
-          selectedDayTextColor: "red",
-          dayTextColor: "#2d4150",
-          calendarBackground: "#ffffff",
-          textSectionTitleColor: "#b6c1cd",
-          textSectionTitleDisabledColor: "#d9e1e8",
-          textDisabledColor: "#d9e1e8",
-          dotColor: "#00adf5",
         }}
       />
       <View style={[styles.viewRow, { paddingHorizontal: 12, marginTop: 15 }]}>
@@ -179,7 +166,7 @@ const CalendarScreen = () => {
         onPressCancel={() => setIsVisible(false)}
         onPressOk={
           inputText && currentIdChoose.current
-            ? () => {
+            ? async () => {
                 setObjectRender({
                   ...objetRender,
                   [dateString]: {
@@ -196,9 +183,17 @@ const CalendarScreen = () => {
                     },
                   },
                 ]);
+                setInfo([
+                  ...getInfo,
+                  {
+                    key: inputText,
+                    color: listItemChoose[currentIdChoose.current!]?.color,
+                  },
+                ]);
+                // loadCalendar();
                 setIsVisible(false);
                 setInputText("");
-                currentIdChoose.current = undefined;
+                // currentIdChoose.current = undefined;
               }
             : () => {
                 ToastAndroid.show(
@@ -219,16 +214,11 @@ const CalendarScreen = () => {
                     key={index}
                     onPress={() => {
                       currentIdChoose.current = i.id;
-                      setItemChoose((preState) => {
-                        const newArr = [...preState];
-                        newArr.forEach((item, i) => {
-                          if (item !== i) {
-                            item.isCheck = false;
-                          }
-                        });
-                        newArr[index].isCheck = true;
-                        return newArr;
-                      });
+                      setItemChoose(
+                        listItemChoose.map((item) => {
+                          return { ...item, isCheck: i.id === item.id };
+                        })
+                      );
                     }}
                     style={[
                       i?.isCheck == true
