@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ToastAndroid,
+  Image,
 } from "react-native";
 import ModalNotion from "~components/modal/ModalNotion";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -15,6 +16,8 @@ import { TextInput } from "react-native-gesture-handler";
 import isEmpty from "lodash.isempty";
 import Container from "~components/Container";
 import Loading from "~components/loadings/Loading";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 
 enum StatusColor {
   GREEN = "green",
@@ -47,12 +50,17 @@ const CalendarScreen = () => {
     const jsonString = await AsyncStorage.getItem("demo-app");
     const jsonObject = jsonString ? JSON.parse(jsonString) : "";
     if (jsonObject) {
+      console.log('--data loaded: ', jsonObject);
       dataStorage.current = jsonObject;
       setDataCalendar(jsonObject);
     }
     setIsLoading(false);
   };
   const saveCalendar = () => {
+    if (inputTitle.current === '') {
+      ToastAndroid.show("Title is required", 800);
+      return;
+    }
     const dataTemp: any = { ...dataCalendar };
     dataTemp[`${dateString.current}`] = {
       ...dataCalendar[`${dateString.current}`],
@@ -63,13 +71,18 @@ const CalendarScreen = () => {
       title: dataCalendar[`${dateString.current}`].title
         ? [...dataCalendar[`${dateString.current}`].title, inputTitle.current]
         : [inputTitle.current],
+      time: dataCalendar[`${dateString.current}`].time
+        ? [...dataCalendar[`${dateString.current}`].time, date.toLocaleTimeString('en-US')]
+        : [date.toLocaleTimeString('en-US')],
     };
     inputTitle.current = "";
+    setDate(new Date('2000-1-1'));
     setDataCalendar(dataTemp);
     setIsVisible(false);
     dataStorage.current[dateString.current] = {
       ...dataTemp[dateString.current],
     };
+    console.log('===dataStorage==', dataStorage)
     saveToLocalStorage(dataStorage.current);
 
     handleDataList(dataTemp, dateString.current);
@@ -121,6 +134,7 @@ const CalendarScreen = () => {
       dataListTemp.push({
         title: data[`${date}`].title[i],
         status: element.color,
+        time: data[`${date}`].time[i],
       });
     }
     setDataList(dataListTemp);
@@ -158,6 +172,29 @@ const CalendarScreen = () => {
   useEffect(() => {
     loadCalendar();
   }, []);
+  const [date, setDate] = useState(new Date('2000-1-1'));
+
+  const onChange = (_: any, selectedDate: any) => {
+    const currentDate = selectedDate;
+    console.log('====', currentDate);
+    setDate(currentDate);
+  };
+
+  const showTimepicker = () => {
+    DateTimePickerAndroid.open({
+      value: date,
+      onChange,
+      mode: 'time',
+      is24Hour: true,
+    });
+
+  };
+
+  console.log('===date==', date);
+
+  // const getTimeString = (date: any) => {
+  //   return 
+  // }
 
   return (
     <Container>
@@ -209,6 +246,9 @@ const CalendarScreen = () => {
                   }}
                 />
                 <Text style={{ fontSize: 18, marginLeft: 10 }}>
+                  {item.time}{' '}
+                </Text>
+                <Text style={{ fontSize: 18, marginLeft: 10 }}>
                   {item.title}
                 </Text>
               </View>
@@ -251,8 +291,17 @@ const CalendarScreen = () => {
             </View>
             <View style={{ marginVertical: 20 }}>
               <Text style={styles.txtPopup}>
-                DateTime: {dateString.current}{" "}
+                Date: {dateString.current}{" "}
               </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+              <Text style={styles.txtPopup}>
+                Time:
+              </Text>
+              <TouchableOpacity onPress={showTimepicker} style={{ flexDirection: 'row', alignItems: 'center' }} >
+                <Text style={styles.txtPopup}> {date.toLocaleTimeString('en-US')}</Text>
+                <Image style={{ width: 30, height: 30 }} source={require('./clock.png')} />
+              </TouchableOpacity>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Text style={styles.txtPopup}>Title: </Text>
