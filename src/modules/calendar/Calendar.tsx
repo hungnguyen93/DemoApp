@@ -7,19 +7,29 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
+  ToastAndroid,
 } from "react-native";
 import ModalNotion from "~components/modal/ModalNotion";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TextInput } from "react-native-gesture-handler";
 import isEmpty from "lodash.isempty";
 import Container from "~components/Container";
+import Loading from "~components/loadings/Loading";
+
+enum StatusColor {
+  GREEN = "green",
+  YELLOW = "#ffd700",
+  BLUE = "blue",
+  RED = "red",
+  BLACK = "black",
+}
 
 const listNameSort = [
-  { title: "Started", id: 1, color: "green" },
-  { title: "In Progress", id: 2, color: "yellow" },
-  { title: "Finished", id: 3, color: "blue" },
-  { title: "Canceled", id: 4, color: "red" },
-  { title: "All", id: 5, color: "black" },
+  { title: "Started", id: 1, color: StatusColor.GREEN, isCheck: true },
+  { title: "In Progress", id: 2, color: StatusColor.YELLOW },
+  { title: "Finished", id: 3, color: StatusColor.BLUE },
+  { title: "Canceled", id: 4, color: StatusColor.RED },
+  { title: "All", id: 5, color: StatusColor.BLACK },
 ];
 
 const CalendarScreen = () => {
@@ -31,6 +41,7 @@ const CalendarScreen = () => {
   const [dataList, setDataList] = useState<any>([]);
   const inputTitle = useRef<string>("");
   const dataStorage = useRef<any>({});
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const loadCalendar = async () => {
     const jsonString = await AsyncStorage.getItem("demo-app");
@@ -39,8 +50,7 @@ const CalendarScreen = () => {
       dataStorage.current = jsonObject;
       setDataCalendar(jsonObject);
     }
-    console.log(jsonObject);
-    // Object.assign(this, jsonObject);
+    setIsLoading(false);
   };
   const saveCalendar = () => {
     const dataTemp: any = { ...dataCalendar };
@@ -54,7 +64,6 @@ const CalendarScreen = () => {
         ? [...dataCalendar[`${dateString.current}`].title, inputTitle.current]
         : [inputTitle.current],
     };
-    console.log("dataTemp", dataTemp);
     inputTitle.current = "";
     setDataCalendar(dataTemp);
     setIsVisible(false);
@@ -80,7 +89,7 @@ const CalendarScreen = () => {
       dataTemp[`${date.dateString}`] = {
         dots: [],
         selected: true,
-        selectedColor: "red",
+        selectedColor: "#5f9ea0",
       };
     } else {
       for (const property in dataCalendar) {
@@ -89,7 +98,7 @@ const CalendarScreen = () => {
             ...dataCalendar[`${property}`],
             dots: dataCalendar[property].dots,
             selected: property === date.dateString,
-            selectedColor: "red",
+            selectedColor: "#5f9ea0",
           };
         }
       }
@@ -97,7 +106,7 @@ const CalendarScreen = () => {
         dataTemp[`${date.dateString}`] = {
           dots: [],
           selected: true,
-          selectedColor: "red",
+          selectedColor: "#5f9ea0",
         };
       }
       handleDataList(dataTemp, date.dateString);
@@ -119,8 +128,7 @@ const CalendarScreen = () => {
 
   const handleButtonFilter = (color: string) => {
     let dataTemp: any = {};
-
-    if (color === "black") {
+    if (color === StatusColor.BLACK) {
       dataTemp = { ...dataStorage.current };
     } else {
       for (const property in dataStorage.current) {
@@ -135,10 +143,16 @@ const CalendarScreen = () => {
         }
       }
     }
-
-    console.log("dataTemp filter", dataTemp);
     setDataCalendar(dataTemp);
     dataList.length > 0 && setDataList([]);
+  };
+
+  const createEvent = () => {
+    if (dateString.current) {
+      setIsVisible(true);
+    } else {
+      ToastAndroid.show("Please select day", 800);
+    }
   };
 
   useEffect(() => {
@@ -148,17 +162,22 @@ const CalendarScreen = () => {
   return (
     <Container>
       <View style={styles.containerRow}>
-        <TouchableOpacity onPress={() => setIsVisible(true)} style={styles.btn}>
+        <TouchableOpacity onPress={createEvent} style={styles.btn}>
           <Text style={styles.txtBtn}>Create Event</Text>
         </TouchableOpacity>
-        <ScrollView showsHorizontalScrollIndicator={false} horizontal>
+        <View style={{ width: 1, backgroundColor: "rgba(0,0,0,0.2)" }} />
+        <ScrollView
+          showsHorizontalScrollIndicator={false}
+          horizontal
+          contentContainerStyle={{ paddingLeft: 10 }}
+        >
           {listNameSort.map((item, index) => (
             <TouchableOpacity
               onPress={() => handleButtonFilter(item.color)}
               key={index}
               style={[styles.btn, { backgroundColor: item.color }]}
             >
-              <Text style={[styles.txtBtn, { color: "#E0E0E0" }]}>
+              <Text style={[styles.txtBtn, { color: "rgba(255,255,255,.7)" }]}>
                 {item.title}
               </Text>
             </TouchableOpacity>
@@ -171,21 +190,16 @@ const CalendarScreen = () => {
         onDayPress={(value) => onDayPress(value)}
       />
       <View style={{ flex: 1, padding: 20 }}>
+        {dataList.length > 0 && <Text>List event</Text>}
         <FlatList
           keyExtractor={(_, index) => `${index}`}
-          ItemSeparatorComponent={() => (
-            <View style={{ height: 0.5, backgroundColor: "gray" }} />
-          )}
+          // ItemSeparatorComponent={() => (
+          //   <View style={{ height: 0.5, backgroundColor: "rgba(0,0,0,.7)" }} />
+          // )}
           data={dataList}
           renderItem={({ item }) => {
             return (
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  paddingVertical: 5,
-                }}
-              >
+              <View style={styles.containerItem}>
                 <View
                   style={{
                     height: 10,
@@ -203,20 +217,22 @@ const CalendarScreen = () => {
         />
       </View>
       <ModalNotion
+        animationType="slide"
         onPressCancel={() => {
           setIsVisible(false);
         }}
         onPressOk={saveCalendar}
-        title={"Set Calendar"}
+        title={"Create event"}
         isVisible={isVisible}
         children={
           <View style={{ marginVertical: 30 }}>
-            <View style={{ flexDirection: "row" }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Text style={styles.txtPopup}>Status: </Text>
               {listItemChoose.map((i, index) => {
                 if (index === listItemChoose.length - 1) return null;
                 return (
                   <TouchableOpacity
+                    activeOpacity={0.9}
                     key={index}
                     onPress={() => {
                       currentIdChoose.current = i.id;
@@ -226,17 +242,18 @@ const CalendarScreen = () => {
                         })
                       );
                     }}
-                    style={[
-                      i?.isCheck == true
-                        ? styles.tcb_Choose_border
-                        : styles.tcb_Choose,
-                      { backgroundColor: i.color },
-                    ]}
-                  />
+                    style={[styles.dotButton, { backgroundColor: i.color }]}
+                  >
+                    {i.isCheck && <View style={styles.viewDot} />}
+                  </TouchableOpacity>
                 );
               })}
             </View>
-            <Text style={styles.txtPopup}>DateTime: {dateString.current} </Text>
+            <View style={{ marginVertical: 20 }}>
+              <Text style={styles.txtPopup}>
+                DateTime: {dateString.current}{" "}
+              </Text>
+            </View>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Text style={styles.txtPopup}>Title: </Text>
               <TextInput
@@ -248,6 +265,7 @@ const CalendarScreen = () => {
           </View>
         }
       />
+      <Loading isVisible={isLoading} />
     </Container>
   );
 };

@@ -93,7 +93,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
     paddingVertical: 15,
   },
   modal_bottom_buttonRight: {
@@ -101,7 +100,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#84C13D",
     alignItems: "center",
     justifyContent: "center",
-    borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     paddingVertical: 15,
   },
@@ -111,7 +109,7 @@ const styles = StyleSheet.create({
     lineHeight: 38,
   },
   modal_bottom_textButtonRight: {
-    fontSize: 26,
+    fontSize: 20,
     color: "white",
     lineHeight: 38,
   },

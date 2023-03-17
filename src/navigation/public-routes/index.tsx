@@ -5,7 +5,11 @@ import { PublicStack } from "../types";
 
 const FuncComponent = () => {
   return (
-    <PublicStack.Navigator>
+    <PublicStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
       <PublicStack.Screen name={"calendar"} component={CalendarScreen} />
       <PublicStack.Screen component={SignIn} name="signIp" />
       <PublicStack.Screen component={SignUp} name="signUp" />
